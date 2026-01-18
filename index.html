@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AI Weather App</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app">
+
+    <h1>🌤 AI Weather</h1>
+
+    <div class="search">
+        <input id="cityInput" placeholder="Enter city">
+        <button id="searchBtn">Search</button>
+    </div>
+
+    <div class="weather" id="weather">
+        <h2 id="city"></h2>
+        <img id="icon">
+        <p id="temp"></p>
+        <p id="condition"></p>
+        <p id="humidity"></p>
+        <p id="wind"></p>
+
+        <div class="ai-box">
+            <h3>🤖 AI Insight</h3>
+            <p id="aiText"></p>
+        </div>
+    </div>
+
+    <div class="hourly">
+        <h3>⏰ Hourly Forecast</h3>
+        <div id="hourlyContainer"></div>
+    </div>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
