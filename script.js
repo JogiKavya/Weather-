@@ -1,83 +1,25 @@
-const apiKey = "ece938ec0383f140283f8f75a3e51f28";
+const apiKey = 'ece938ec0383f140283f8f75a3e51f28';
+const $ = id => document.getElementById(id);
+let units = localStorage.getItem('weather-units') || 'metric';
+let currentData;
+const unitLabel = () => units === 'metric' ? '°C' : '°F';
 
-document.getElementById("searchBtn")
-    .addEventListener("click", getWeather);
+$('searchBtn').addEventListener('click', () => searchCity($('cityInput').value));
+$('cityInput').addEventListener('keydown', e => { if (e.key === 'Enter') searchCity(e.target.value); });
+$('unitBtn').addEventListener('click', () => { units = units === 'metric' ? 'imperial' : 'metric'; localStorage.setItem('weather-units', units); $('unitBtn').textContent = unitLabel(); if (currentData) searchCity(currentData.name, false); });
+$('locationBtn').addEventListener('click', useLocation);
+$('unitBtn').textContent = unitLabel(); renderRecent();
 
-function getWeather() {
-    const city = document.getElementById("cityInput").value;
-    if (!city) {
-        alert("Enter city");
-        return;
-    }
-
-    fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${apiKey}`)
-        .then(res => res.json())
-        .then(data => {
-            if (data.cod !== 200) {
-                alert(data.message);
-                return;
-            }
-            updateUI(data);
-            getHourlyForecast(city);
-        });
-}
-
-function updateUI(data) {
-    document.getElementById("city").innerText = data.name;
-    document.getElementById("temp").innerText = `${data.main.temp}°C`;
-    document.getElementById("condition").innerText = data.weather[0].description;
-    document.getElementById("humidity").innerText = `Humidity: ${data.main.humidity}%`;
-    document.getElementById("wind").innerText = `Wind: ${data.wind.speed} m/s`;
-
-    document.getElementById("icon").src =
-        `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`;
-
-    runAI(data);
-}
-
-function getHourlyForecast(city) {
-    fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city}&units=metric&appid=${apiKey}`)
-        .then(res => res.json())
-        .then(data => {
-            showHourlyForecast(data.list);
-        });
-}
-
-function showHourlyForecast(list) {
-    const container = document.getElementById("hourlyContainer");
-    container.innerHTML = "";
-
-    for (let i = 0; i < 6; i++) {
-        const hour = list[i];
-        const time = new Date(hour.dt_txt)
-            .toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-
-        const card = document.createElement("div");
-        card.className = "hour-card";
-        card.innerHTML = `
-            <p>${time}</p>
-            <img src="https://openweathermap.org/img/wn/${hour.weather[0].icon}.png">
-            <p>${Math.round(hour.main.temp)}°C</p>
-            <p>${hour.weather[0].main}</p>
-        `;
-        container.appendChild(card);
-    }
-}
-
-function runAI(data) {
-    const temp = data.main.temp;
-    const humidity = data.main.humidity;
-    const condition = data.weather[0].main.toLowerCase();
-
-    let insight = "Weather looks pleasant today.";
-
-    if (temp > 30 && humidity > 70) {
-        insight = "It is hot and humid. Drink water and avoid afternoon sun.";
-    } else if (condition.includes("rain")) {
-        insight = "Rain expected. Carry an umbrella.";
-    } else if (temp < 15) {
-        insight = "It is cold. Wear warm clothes.";
-    }
-
-    document.getElementById("aiText").innerText = insight;
-}
+async function searchCity(city, save = true) { if (!city.trim()) return setStatus('Please enter a city name.'); setStatus('Fetching the latest conditions…'); toggleLoading(true); try { const base = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&units=${units}&appid=${apiKey}`; const data = await fetch(base).then(check); currentData = data; updateUI(data); await getForecast(`q=${encodeURIComponent(city)}`); if (save) saveRecent(data.name); setStatus(''); } catch (error) { setStatus(error.message || 'Unable to load weather right now.'); } finally { toggleLoading(false); } }
+async function useLocation(){ if(!navigator.geolocation) return setStatus('Location is not supported by this browser.'); setStatus('Finding your location…'); navigator.geolocation.getCurrentPosition(async pos => { toggleLoading(true); try { const {latitude:lat,longitude:lon}=pos.coords; const data=await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=${units}&appid=${apiKey}`).then(check); currentData=data; updateUI(data); await getForecast(`lat=${lat}&lon=${lon}`); saveRecent(data.name); setStatus(''); } catch(error){setStatus(error.message)} finally{toggleLoading(false)} },()=>setStatus('Location access was not granted.')); }
+async function getForecast(query){ const data=await fetch(`https://api.openweathermap.org/data/2.5/forecast?${query}&units=${units}&appid=${apiKey}`).then(check); showHourly(data.list.slice(0,6)); showDaily(data.list); }
+function check(res){return res.json().then(data=>{if(!res.ok||String(data.cod)!=='200')throw new Error(data.message||'City not found.');return data})}
+function updateUI(data){ $('weather').classList.remove('hidden'); $('city').textContent=`${data.name}, ${data.sys.country}`; $('temp').textContent=Math.round(data.main.temp); $('unit').textContent=unitLabel(); $('condition').textContent=data.weather[0].description; $('humidity').textContent=`${data.main.humidity}%`; $('wind').textContent=`${Math.round(data.wind.speed)} ${units==='metric'?'m/s':'mph'}`; $('feels').textContent=`${Math.round(data.main.feels_like)}${unitLabel()}`; $('icon').src=`https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`; $('icon').alt=data.weather[0].description; $('date').textContent=new Intl.DateTimeFormat(undefined,{weekday:'long',month:'short',day:'numeric'}).format(new Date()); $('sunrise').textContent=formatTime(data.sys.sunrise*1000); $('sunset').textContent=formatTime(data.sys.sunset*1000); $('aiText').textContent=makeInsight(data); $('updated').textContent='Updated just now'; }
+function showHourly(list){ $('forecastSection').classList.remove('hidden'); $('hourlyContainer').innerHTML=list.map(item=>`<article class="hour-card"><p>${formatTime(item.dt*1000)}</p><img src="https://openweathermap.org/img/wn/${item.weather[0].icon}.png" alt="${item.weather[0].description}"><b>${Math.round(item.main.temp)}${unitLabel()}</b><p>${item.weather[0].main}</p></article>`).join(''); }
+function showDaily(list){ const days=[]; const seen=new Set(); list.forEach(item=>{const key=new Date(item.dt*1000).toDateString();if(!seen.has(key)){seen.add(key);days.push(item)}}); $('dailySection').classList.remove('hidden'); $('dailyContainer').innerHTML=days.slice(0,5).map((item,i)=>`<div class="day-row"><b>${i===0?'Today':new Intl.DateTimeFormat(undefined,{weekday:'long'}).format(new Date(item.dt*1000))}</b><span><img src="https://openweathermap.org/img/wn/${item.weather[0].icon}.png" alt="">${item.weather[0].main}</span><b>${Math.round(item.main.temp)}${unitLabel()}</b><span>Humidity ${item.main.humidity}%</span></div>`).join(''); }
+function makeInsight(data){const {temp,humidity}=data.main,condition=data.weather[0].main.toLowerCase();if(condition.includes('rain')||condition.includes('drizzle'))return 'Rain is in the forecast—keep an umbrella close and allow extra travel time.';if(temp>32&&humidity>65)return 'Warm and humid conditions today. Stay hydrated and plan outdoor time for early morning or evening.';if(temp<18)return 'A cooler day ahead. A light layer will make your time outdoors more comfortable.';if(data.wind.speed>9)return 'It is breezy outside. Secure loose items and take extra care if you are commuting.';return 'Comfortable conditions for your plans today. It is a great time to get outside.'}
+function formatTime(value){return new Intl.DateTimeFormat(undefined,{hour:'numeric',minute:'2-digit'}).format(new Date(value));}
+function setStatus(message){$('status').textContent=message;}
+function toggleLoading(loading){$('searchBtn').disabled=loading;$('searchBtn').textContent=loading?'Loading…':'Search';}
+function saveRecent(city){let cities=JSON.parse(localStorage.getItem('recent-cities')||'[]');cities=[city,...cities.filter(c=>c.toLowerCase()!==city.toLowerCase())].slice(0,4);localStorage.setItem('recent-cities',JSON.stringify(cities));renderRecent();}
+function renderRecent(){const cities=JSON.parse(localStorage.getItem('recent-cities')||'[]');$('recentCities').innerHTML=cities.length?`<span>Recent:</span>${cities.map(c=>`<button data-city="${c}">${c}</button>`).join('')}`:'';$('recentCities').querySelectorAll('button').forEach(btn=>btn.onclick=()=>searchCity(btn.dataset.city));}
