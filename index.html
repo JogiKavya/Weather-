@@ -1,44 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>AI Weather App</title>
-
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="A premium weather dashboard by Kavya"><title>Atmos — Weather Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-<div class="app">
-
-    <h1>🌤 AI Weather</h1>
-
-    <div class="search">
-        <input id="cityInput" placeholder="Enter city">
-        <button id="searchBtn">Search</button>
-    </div>
-
-    <div class="weather" id="weather">
-        <h2 id="city"></h2>
-        <img id="icon">
-        <p id="temp"></p>
-        <p id="condition"></p>
-        <p id="humidity"></p>
-        <p id="wind"></p>
-
-        <div class="ai-box">
-            <h3>🤖 AI Insight</h3>
-            <p id="aiText"></p>
-        </div>
-    </div>
-
-    <div class="hourly">
-        <h3>⏰ Hourly Forecast</h3>
-        <div id="hourlyContainer"></div>
-    </div>
-
-</div>
-
-<script src="script.js"></script>
-</body>
-</html>
+  <main class="app-shell">
+    <section class="hero"><p class="eyebrow">Live conditions</p><h1>Weather, <em>beautifully</em><br>clear.</h1><p class="subcopy">Plan your day with precise local conditions and a thoughtful forecast.</p>
+      <div class="search-row"><label class="search-box"><span>⌕</span><input id="cityInput" autocomplete="off" placeholder="Search any city" aria-label="Search a city"></label><button id="searchBtn" class="primary">Search</button><button id="locationBtn" class="location" aria-label="Use my location">⌖</button></div><div id="recentCities" class="recent-cities"></div></section>
+    <p id="status" class="status" role="status"></p>
+    <section id="weather" class="weather-grid hidden"><article class="current card"><div class="location-line"><div><p class="eyebrow" id="date">Today</p><h2 id="city">—</h2></div><img id="icon" alt="Weather icon"></div><div class="temperature"><span id="temp">--</span><small id="unit">°C</small></div><p id="condition" class="condition">—</p><div class="metrics"><div><span>Humidity</span><b id="humidity">—</b></div><div><span>Wind</span><b id="wind">—</b></div><div><span>Feels like</span><b id="feels">—</b></div></div></article>
+      <article class="insight card"><p class="eyebrow">Smart forecast</p><h3>Today’s insight</h3><p id="aiText">Search for a city to receive a useful weather insight.</p><div class="sun-row"><span>☀ Sunrise <b id="sunrise">—</b></span><span>☾ Sunset <b id="sunset">—</b></span></div></article></section>
+    <section id="forecastSection" class="forecast-section hidden"><div class="section-heading"><div><p class="eyebrow">Next hours</p><h2>Hourly forecast</h2></div><p id="updated">Updated now</p></div><div id="hourlyContainer" class="hourly-grid"></div></section>
+    <section id="dailySection" class="forecast-section hidden"><div class="section-heading"><div><p class="eyebrow">Ahead</p><h2>5-day outlook</h2></div></div><div id="dailyContainer" class="daily-list"></div></section>
+  </main><script src="script.js"></script>
+</body></html>
